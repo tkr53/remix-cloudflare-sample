@@ -1,15 +1,18 @@
-import { PrismaD1 } from "@prisma/adapter-d1";
-import { PrismaClient } from "@prisma/client"
 import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/cloudflare";
 import { useLoaderData } from "@remix-run/react";
 
 
+type Book = {
+  id: number;
+  title: string;
+  author: string;
+}
 export const loader = async ({context}: LoaderFunctionArgs) => {
   const { env } = context.cloudflare;
-  const adapter = new PrismaD1(env.DB)
-  const prisma = new PrismaClient({adapter})
-  const books = await prisma.book.findMany()
-  return json({books})
+  const {results} = await env.DB.prepare(
+    "SELECT * FROM books;"
+  ).all<Book>()
+  return json({results})
 }
 
 export const meta: MetaFunction = () => {
@@ -23,7 +26,7 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
-  const { books } = useLoaderData<typeof loader>();
+  const { results } = useLoaderData<typeof loader>();
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
@@ -43,7 +46,7 @@ export default function Index() {
             Remix Docs
           </a>
         </li>
-        {books.map((book) => (
+        {results.map((book) => (
           <li key={book.id}>
             {book.title} - {book.author}
           </li>
