@@ -1,4 +1,19 @@
-import type { MetaFunction } from "@remix-run/cloudflare";
+import { json, type LoaderFunctionArgs, type MetaFunction } from "@remix-run/cloudflare";
+import { useLoaderData } from "@remix-run/react";
+
+
+type Book = {
+  id: number;
+  title: string;
+  author: string;
+}
+export const loader = async ({context}: LoaderFunctionArgs) => {
+  const { env } = context.cloudflare;
+  const {results} = await env.DB.prepare(
+    "SELECT * FROM books;"
+  ).all<Book>()
+  return json({results})
+}
 
 export const meta: MetaFunction = () => {
   return [
@@ -11,6 +26,8 @@ export const meta: MetaFunction = () => {
 };
 
 export default function Index() {
+  const { results } = useLoaderData<typeof loader>();
+
   return (
     <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
       <h1>RemixプロジェクトをCloudflare Pagesにデプロイするサンプルプロジェクト</h1>
@@ -29,6 +46,11 @@ export default function Index() {
             Remix Docs
           </a>
         </li>
+        {results.map((book) => (
+          <li key={book.id}>
+            {book.title} - {book.author}
+          </li>
+        ))}
       </ul>
     </div>
   );
