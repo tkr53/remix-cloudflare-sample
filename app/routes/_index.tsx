@@ -10,7 +10,7 @@ type Book = {
 export const loader = async ({context}: LoaderFunctionArgs) => {
   const { env } = context.cloudflare;
   const {results} = await env.DB.prepare(
-    "SELECT * FROM books;"
+    "SELECT * FROM book;"
   ).all<Book>()
   return json({results})
 }
